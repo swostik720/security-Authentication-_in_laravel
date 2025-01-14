@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -27,16 +29,48 @@ class AuthController extends Controller
             'password' => 'required|string|min:4|confirmed',
         ]);
 
+        // Create a new user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
+        // Send the verification link
+        event(new Registered($user));
+
+        // Redirect with a status message
+        return redirect('/register')->with('status', 'Registration successful. Please verify your email to activate your account.');
+    }
+
+
+    public function verifyEmail(Request $request, $id, $hash)
+    {
+        // Find the user by their ID
+        $user = User::findOrFail($id);
+
+        // Verify the hash by comparing it with the email hash
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            return redirect('/register')->withErrors(['email' => 'Invalid or expired verification link.']);
+        }
+
+        // If the user's email is not verified, mark it as verified
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+            $user->save();
+
+            // Return success message after successful verification
+            return redirect('/register')->with('status', 'Your email has been successfully verified! You can now log in.');
+        }
+
+        // If the email is already verified, proceed with login
         Auth::login($user);
 
-        return redirect('/login');
+        // Status message for login after successful verification
+        return redirect('/login')->with('status', 'Email verified successfully! You can now log in.');
     }
+
+
 
     public function showLoginForm()
     {
@@ -51,6 +85,13 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($request->only('email', 'password'))) {
+
+            if (!Auth::user()->email_verified_at === null) {
+                Auth::logout(); // Log the user out if their email is not verified
+
+                return redirect('/login')->withErrors(['email' => 'Please verify your email address to log in.']);
+            }
+
             // Check if the user is an admin or a regular user
             if (auth()->user()->is_admin) {
                 return redirect('/admin/dashboard'); // Redirect to admin dashboard

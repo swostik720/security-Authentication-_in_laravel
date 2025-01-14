@@ -8,6 +8,10 @@
 <body>
     <div class="container">
         <h2>Login</h2>
+        @if (session('status'))
+            <p style="color: green;">{{ session('status') }}</p>
+        @endif
+
         @if ($errors->any())
             <p style="color: red;">{{ $errors->first() }}</p>
         @endif
@@ -29,7 +33,7 @@
         <!-- Google Login Button -->
         <div>
             <a href="{{ url('auth/google') }}">
-                <button type="button" style="background-color: #4285F4; color: white; border: none; padding: 10px 15px; cursor: pointer;">
+                <button type="button">
                     Login with Google
                 </button>
             </a>

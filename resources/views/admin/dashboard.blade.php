@@ -13,5 +13,5 @@
         @csrf
         <button type="submit">Logout</button>
     </form>
-</body>
+    <button><a href="{{ route('profile') }}">Profile</a></button></body>
 </html>

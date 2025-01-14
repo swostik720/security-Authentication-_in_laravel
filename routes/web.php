@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 
 /*
@@ -44,5 +45,16 @@ Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLink']
 
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail']);
+
+Route::get('/profile', [ProfileController::class, 'showProfile'])->middleware('auth')->name('profile');
+Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->middleware('auth');
+
+Route::get('/profile/resetPasswordLink', [ProfileController::class, 'showResetPasswordLinkForm'])->middleware('auth');
+Route::post('/profile/resetPasswordLink', [ProfileController::class, 'ResetPasswordLink'])->middleware('auth');
+
+Route::post('/profile/delete-account', [ProfileController::class, 'deleteAccount'])->middleware('auth');
 
 
